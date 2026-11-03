@@ -270,6 +270,12 @@ static void usb_storage_register_part(void *drive_obj, int drive_idx, int part_i
     char name[16];
     snprintf(name, sizeof(name), "usb%dp%d", drive_idx, part_idx + 1);
 
+    if (start >= ms->sector_count || count > ms->sector_count - start) {
+        serial_printf(LOG_WARN "usbstorage%d: partition %d runs past the end of the drive, leaving it out\n",
+                      ms->index, part_idx + 1);
+        return;
+    }
+
     if (usb_storage_register(ms, name, start, count))
         serial_printf(LOG_OK "usbstorage%d: registered /dev/%s (lba=%llu sectors=%llu type=0x%02x)\n",
                       ms->index, name, start, count, type);
