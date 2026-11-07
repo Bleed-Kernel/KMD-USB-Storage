@@ -10,6 +10,7 @@
 #include <fs/vfs_mount.h>
 #include <fs/iso9660/iso9660.h>
 #include <fs/data_image.h>
+#include <fs/packages.h>
 #include <mm/kalloc.h>
 #include <user/user_copy.h>
 #include <user/errno.h>
@@ -554,6 +555,8 @@ void usb_storage_automount(void) {
     }
 
     // a stick with data.img on it next to the iso. this runs every 100ms 
-    if (mounted)
+    if (mounted) {
         data_image_scan();
+        packages_scan();
+    }
 }
