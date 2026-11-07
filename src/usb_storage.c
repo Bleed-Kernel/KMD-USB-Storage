@@ -533,25 +533,18 @@ void usb_storage_automount(void) {
         if (!ms->used || ms->mount_tried || ms->ejected || ms->dev->gone) continue;
         ms->mount_tried = true;
 
-        char part[16];
-        snprintf(part, sizeof(part), "usb%dp1", ms->index);
-        // a stick with the iso dd'd to it is the iso9660 from the top, its first partition is an empty gap
-        const char *name = device_get_by_name(part) && !iso9660_probe(device_get_by_name(ms->names[0]))
-                         ? part : ms->names[0];
-
         char path[16];
         if (ms->index == 0)
             snprintf(path, sizeof(path), "/mnt/usb");
         else
             snprintf(path, sizeof(path), "/mnt/usb%d", ms->index);
 
-        int r = vfs_mount(path, device_get_by_name(name));
-        mounted |= r == 0;
-        if (r == 0)
-            serial_printf(LOG_OK "usbstorage%d: /dev/%s mounted at %s\n", ms->index, name, path);
+        int r = vfs_mount_disk(path, ms->names[0], "p");
+        mounted |= r > 0;
+        if (r > 0)
+            serial_printf(LOG_OK "usbstorage%d: %d filesystem(s) mounted from %s\n", ms->index, r, path);
         else
-            serial_printf(LOG_WARN "usbstorage%d: couldnt mount /dev/%s at %s (%d)\n",
-                          ms->index, name, path, r);
+            serial_printf(LOG_WARN "usbstorage%d: nothing on /dev/%s we can mount\n", ms->index, ms->names[0]);
     }
 
     // a stick with data.img on it next to the iso. this runs every 100ms 
